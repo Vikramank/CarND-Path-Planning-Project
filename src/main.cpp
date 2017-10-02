@@ -254,7 +254,7 @@ int main()
 						car_s = end_path_s;
 					}
 
-					bool too_close = false;
+					bool too_close = false; // to find adjacent cars
 					double other_car_speed;
 					double min_safe_distance = 40.0;
 					double min_traffic_distance = 40.0;
