@@ -289,7 +289,7 @@ int main()
 						}
 					}
 
-					// Is the car in a dangerous spot in the right lane?
+					
 
 					if (too_close)
 					{
