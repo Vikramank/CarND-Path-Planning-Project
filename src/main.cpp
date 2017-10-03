@@ -254,11 +254,14 @@ int main()
 						car_s = end_path_s;
 					}
 
-					bool too_close = false; // to find adjacent cars
-					double other_car_speed;
-					double min_safe_distance = 40.0;
-					double min_traffic_distance = 40.0;
-					double very_close_distance = 30.0;
+					bool too_close = false; // to find adjacent cars in our lane
+					double other_car_speed; // to measure speed of other cars in our lane
+					double min_safe_distance = 40.0; // minimum bumber to bumper distance in order to avoid any possible collision
+					double min_safe_distance_lane = 80.0; // minimum absolute distance between our car and cars in adjacent lanes to perform a lane shift
+					double very_close_distance = 30.0; // activate emergency breaking to avoid collision
+					bool try_lane_change=false; // a variable to perform lane change 
+					bool left_lane_clear=false; // to ensure lane change left is possible
+					bool right_lane_clear=false; // to ensure lane change right is possible
 
 					for (int i = 0; i < sensor_fusion.size(); i++)
 					{
@@ -270,14 +273,17 @@ int main()
 						double check_speed = sqrt(vx * vx + vy * vy);
 						double check_car_s = sensor_fusion[i][5];
 
-						check_car_s += (double)prev_size * 0.02 * check_speed; 
 
+						check_car_s += (double)prev_size * 0.02 * check_speed; //position of car in s coordinate after a time interval
+                        // check for cars in our lane 
 						if (d < (2 + 4 * lane + 2) && d > (2 + 4 * lane - 2))
 						{
+							other_car_speed=check_speed;
 							//cars in the same lane as our car
 							if ((check_car_s > car_s) && ((check_car_s - car_s) < min_safe_distance))
 							{
 								too_close = true;
+								try_lane_change=true;
 								//emergency situation
 								if ((check_car_s > car_s) && ((check_car_s - car_s) < very_close_distance))
 								{
@@ -286,33 +292,91 @@ int main()
 									cout << "Matching speed of front car to minimise Jerk" << endl;
 								}
 							}
+
 						}
+						 // check whether lane change to the adjacent left lane is possible
+						if(lane!=0)
+						{
+						if (d < (2 + 4 * (lane-1) + 2) && d > (2 + 4 * (lane-1) - 2))
+					 {
+						//absolute distane ensures there are no vehicles at the back 
+						 if ((abs(check_car_s - car_s) < min_safe_distance_lane))
+						 {
+							 left_lane_clear=false;
+						 }
+						 else{
+							 left_lane_clear=true;
+						 }
+					 }
+				 }
+
+				 // check whether lane change to the adjacent right lane is possible
+			if(lane!=2)
+			{
+					 if (d < (2 + 4 * (lane+1) + 2) && d > (2 + 4 * (lane+1) - 2))
+					 {
+						 
+						
+						 if ((abs(check_car_s - car_s) < min_safe_distance_lane))
+						 {
+							 right_lane_clear=false;
+						 }
+						 else{
+							 right_lane_clear=true;
+						 }
+					 }
+
+
 					}
+				}
 
-					
 
+                    // when we approach cars in our lane, we need to slow down
 					if (too_close)
 					{
 						ref_vel -= 0.224;
-						cout<<"slow down"<<endl;
+						//cout<<"slow down"<<endl;
 					}
+					// in other cases match the speed limit
 
 					else if (ref_vel < 49.5)
 					{
-						cout << "speed up!" << endl;
+						//cout << "speed up!" << endl;
 						ref_vel = ref_vel + 0.224;
-						cout << "rel velocity" << ref_vel << endl;
+						//cout << "rel velocity" << ref_vel << endl;
+					}
+                    //if lane change is required
+					if(try_lane_change)
+					{   // preference to lane change left to stay near the yellow line
+						if (left_lane_clear)
+						{
+							lane=lane-1;
+							cout<<"Changing lane to left lane"<<endl;
+						}
+						//if left lane change is not possible, try lane change right
+						else if (right_lane_clear)
+						{
+							lane=lane+1;
+							cout<<"Changing lane to right lane"<<endl;
+						}
+						//if neither is possible, stay in the lane
+						else{
+							cout<<"Lane change not possible now"<<endl;
+						}
+						try_lane_change=false;
+						right_lane_clear=false;
+						left_lane_clear=false;
 					}
 
 					vector<double> ptsx;
 					vector<double> ptsy;
 
-					
+
 					double ref_x = car_x;
 					double ref_y = car_y;
 					double ref_yaw = deg2rad(car_yaw);
 
-					
+
 					if (prev_size < 2)
 					{
 
@@ -327,9 +391,9 @@ int main()
 						ptsy.push_back(car_y);
 					}
 					else
-					{ 
+					{
 
-				
+
 						ref_x = previous_path_x[prev_size - 1];
 						ref_y = previous_path_y[prev_size - 1];
 
@@ -337,7 +401,7 @@ int main()
 						double ref_y_prev = previous_path_y[prev_size - 2];
 						ref_yaw = atan2(ref_y - ref_y_prev, ref_x - ref_x_prev);
 
-						
+
 						ptsx.push_back(ref_x_prev);
 						ptsx.push_back(ref_x);
 
@@ -371,7 +435,7 @@ int main()
 						ptsy[i] = shift_x * sin(0 - ref_yaw) + shift_y * cos(0 - ref_yaw);
 					}
 
-					// create a spline 
+					// create a spline
 					tk::spline s;
 
 					// set (x, y) points to the spline curve
@@ -390,7 +454,7 @@ int main()
 
 					double x_add_on = 0;
 
-					
+
 					for (int i = 1; i < 50 - previous_path_x.size(); i++)
 					{
 						double N = target_dist / (0.02 * ref_vel / 2.24); // 2.24 is the conversion factor to convert mph to m/s
