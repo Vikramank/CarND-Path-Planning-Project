@@ -1,6 +1,25 @@
 # CarND-Path-Planning-Project
 Self-Driving Car Engineer Nanodegree Program
-   
+
+### Introduction
+This is by far the most interesting and challenging part of the Nano degree program. In this project we are required to implement a trajectory that car would follow. The inputs are the map coordinates, car location, location of other cars using sensor fusion and speed limit, etc.
+### Priority 
+The most important aspect of a self driving car is safety. The priority of this algorithm is as follows: <br />
+Safety >> Legal >> Efficiency >> Comfort
+
+### Safety 
+Collision avoidance and emergency braking 
+### Legal
+Speed limit
+### Efficiency
+Provide a path that can be reached in shortest time. Lane change
+### Comfort
+Jerk minimisation
+
+### Implementation details 
+
+
+
 ### Simulator.
 You can download the Term3 Simulator which contains the Path Planning Project from the [releases tab (https://github.com/udacity/self-driving-car-sim/releases).
 
