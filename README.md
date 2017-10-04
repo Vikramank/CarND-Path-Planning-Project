@@ -8,16 +8,14 @@ The most important aspect of a self driving car is safety. The priority of this 
 Safety >> Legal >> Efficiency >> Comfort
 
 ### Safety 
-Collision avoidance and emergency braking 
+Safety is by far the highest priority of a self driving car. The key goal to implement a self driving car is to minimise the occurance of accidents. In this project I've implemented the features like emergency braking and collision avoidance. Emergency breaking drastically reduces the speed to the speed of the car in front of us and is activated when there a car abruptly slows down or a car from adjacent lane makes a sudden lane change. Collision avoidance is maintaining a neutral gap of 40m in front of our car. Whenver this gap is reduced, the car will decelerate and accelerate again.
+ 
 ### Legal
-Speed limit
+The key legal aspect in this project is obeying the Speed limit which is 50 MPH. The car will start from 0 MPH and accelerate to achieve a speed of 49 MPH, close to the speed limit. 
 ### Efficiency
-Provide a path that can be reached in shortest time. Lane change
+The car needs to reach the destination in a smooth trajectory and within the shortest time possible. To achieve this, I have implemented dynamic lane change to the adjacent lane (either left of right lane)  
 ### Comfort
-Jerk minimisation
-
-### Implementation details 
-
+To have a comfortablel ride, jerk should be minimised. The key aspect creating a jerk in fast acceleration. I chose the points carefully to overcome jerks as much as possible. 
 
 
 ### Simulator.
