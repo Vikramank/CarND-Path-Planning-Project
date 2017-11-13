@@ -256,7 +256,7 @@ int main()
 
 					bool too_close = false;				  // to find adjacent cars in our lane
 					double other_car_speed;				  // to measure speed of other cars in our lane
-					double min_safe_distance = 60.0;	  // minimum bumber to bumper distance in order to avoid any possible collision
+					double min_safe_distance = 100.0;	  // minimum bumber to bumper distance in order to avoid any possible collision
 					double min_safe_distance_lane = 50.0; // minimum absolute distance between our car and cars in adjacent lanes to perform a lane shift
 					double very_close_distance = 30.0;	// activate emergency breaking to avoid collision
 					bool try_lane_change = false;		  // a variable to perform lane change
@@ -279,7 +279,8 @@ int main()
 						{
 							other_car_speed = check_speed;
 							//cars in the same lane as our car
-							if ((check_car_s > car_s) && ((check_car_s - car_s) < very_close_distance))
+							//if ((check_car_s > car_s) && ((check_car_s - car_s) < very_close_distance))
+							if ((check_car_s > car_s) && (abs(check_car_s - car_s) < very_close_distance))
 							{
 								//emergency situation
 								ref_vel = other_car_speed;
@@ -288,9 +289,13 @@ int main()
 								too_close = true;
 								try_lane_change = true;
 							}
-							else if ((check_car_s > car_s) && ((check_car_s - car_s) < min_safe_distance))
+							//else if ((check_car_s > car_s) && (abs(check_car_s - car_s) < min_safe_distance))
+							else if ((check_car_s > car_s) && (abs(check_car_s - car_s) < min_safe_distance))
 							{
 								too_close = true;
+								//ref_vel -= 0.224;
+								cout << "ref_vel :" <<ref_vel<< '\n';
+								std::cout << "approaching car" << '\n';
 								try_lane_change = true;
 							}
 							else
@@ -299,6 +304,7 @@ int main()
 								try_lane_change = false;
 							}
 						}
+
 						// check whether lane change to the adjacent left lane is possible
 						if (lane != 0)
 						{
@@ -332,12 +338,26 @@ int main()
 								}
 							}
 						}
+
 					}
 
 					// when we approach cars in our lane, we need to slow down
+					if (too_close)
+					{
+						ref_vel -= 0.224;
+						std::cout << "slow down" << endl;
+					}
+					// in other cases match the speed limit
+
+					else if (ref_vel < 49.5)
+					{
+						//cout << "speed up!" << endl;
+						ref_vel +=  0.224;
+						//cout << "rel velocity" << ref_vel << endl;
+					}
 
 					//if lane change is required
-					if (try_lane_change)
+				if (try_lane_change)
 					{ // preference to lane change left to stay near the yellow line
 						if (left_lane_clear)
 						{
@@ -358,20 +378,9 @@ int main()
 						try_lane_change = false;
 						right_lane_clear = false;
 						left_lane_clear = false;
-					}
-					if (too_close)
-					{
-						ref_vel -= 0.224;
-						cout << "slow down" << endl;
-					}
-					// in other cases match the speed limit
 
-					else if (ref_vel < 49.5)
-					{
-						//cout << "speed up!" << endl;
-						ref_vel = ref_vel + 0.224;
-						//cout << "rel velocity" << ref_vel << endl;
 					}
+
 
 					vector<double> ptsx;
 					vector<double> ptsy;
@@ -414,7 +423,7 @@ int main()
 					vector<double> next_wp0 = getXY(car_s + 30, (2 + 4 * lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
 					vector<double> next_wp1 = getXY(car_s + 60, (2 + 4 * lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
 					vector<double> next_wp2 = getXY(car_s + 90, (2 + 4 * lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
-					vector<double> next_wp3 = getXY(car_s + 120, (2 + 4 * lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
+					//vector<double> next_wp3 = getXY(car_s + 120, (2 + 4 * lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
 
 					ptsx.push_back(next_wp0[0]);
 					ptsx.push_back(next_wp1[0]);
@@ -449,15 +458,16 @@ int main()
 					}
 
 					// using spline curve, we predict the points x,y
-					double target_x = 30.0;
+					double target_x = 90.0;
 					double target_y = s(target_x);
 					double target_dist = sqrt(target_x * target_x + target_y * target_y);
+					double N = target_dist / (0.02 * ref_vel / 2.24); // 2.24 is the conversion factor to convert mph to m/s
 
 					double x_add_on = 0;
 
 					for (int i = 1; i < 50 - previous_path_x.size(); i++)
 					{
-						double N = target_dist / (0.02 * ref_vel / 2.24); // 2.24 is the conversion factor to convert mph to m/s
+
 						double x_point = x_add_on + target_x / N;
 						double y_point = s(x_point);
 
@@ -475,6 +485,7 @@ int main()
 						next_x_vals.push_back(x_point);
 						next_y_vals.push_back(y_point);
 					}
+
 
 					msgJson["next_x"] = next_x_vals;
 					msgJson["next_y"] = next_y_vals;
@@ -533,4 +544,3 @@ int main()
 	}
 	h.run();
 }
-
