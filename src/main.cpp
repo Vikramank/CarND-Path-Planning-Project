@@ -191,6 +191,9 @@ int main() {
     map_waypoints_dy.push_back(d_y);
   }
 
+  int lane=1;
+  double ref_vel = 0.0;
+
   h.onMessage([&map_waypoints_x, &map_waypoints_y, &map_waypoints_s,
                &map_waypoints_dx,
                &map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws, char *data,
@@ -200,8 +203,7 @@ int main() {
     // The 2 signifies a websocket event
     // auto sdata = string(data).substr(0, length);
     // cout << sdata << endl;
-    int lane = 1;
-    double ref_vel = 49.0;
+
     if (length && length > 2 && data[0] == '4' && data[1] == '2') {
 
       auto s = hasData(data);
@@ -253,34 +255,7 @@ int main() {
             car_s = end_path_s;
           }
 
-          for (int i = 0; i < sensor_fusion.size(); i++) {
 
-            // parameter's of  i'th car on the road
-            float d = sensor_fusion[i][6];
-            double vx = sensor_fusion[i][3];
-            double vy = sensor_fusion[i][4];
-            double check_speed = sqrt(vx * vx + vy * vy);
-            double check_car_s = sensor_fusion[i][5];
-
-            check_car_s += (double)prev_size * 0.02 * check_speed;
-            if ((check_car_s > car_s) &&
-                (abs(check_car_s - car_s) < very_close_distance)) {
-              reduce_speed = true;
-              std::cout << "Car infront me!!!" << '\n';
-
-            } else {
-              reduce_speed = false;
-            }
-          }
-          if (reduce_speed) {
-            cout << "Slowing down" << endl;
-            std::cout << "speed:" << ref_vel << '\n';
-            ref_vel -= 0.224;
-          } else if ((ref_vel < 49) and !reduce_speed) {
-            cout << "speed up!" << endl;
-            ref_vel += 0.224;
-            // cout << "rel velocity" << ref_vel << endl;
-          }
 
           vector<double> ptsx;
           vector<double> ptsy;
@@ -315,6 +290,41 @@ int main() {
             ptsy.push_back(ref_y_prev);
             ptsy.push_back(ref_y);
           }
+          for (int i = 0; i < sensor_fusion.size(); i++) {
+
+            // parameter's of  i'th car on the road
+            float d = sensor_fusion[i][6];
+            double vx = sensor_fusion[i][3];
+            double vy = sensor_fusion[i][4];
+            double check_speed = sqrt(vx * vx + vy * vy);
+            double check_car_s = sensor_fusion[i][5];
+
+            check_car_s += (double)prev_size * 0.02 * check_speed;
+            //if ((check_car_s > car_s) &&(abs(check_car_s - car_s) < very_close_distance))
+            if ((abs(check_car_s - car_s) < very_close_distance))
+            {
+              reduce_speed = true;
+              std::cout << "Car infront me!!!" << '\n';
+              break;
+
+            }
+            else {
+              reduce_speed = false;
+            }
+          }
+          if (reduce_speed==true) {
+            cout << "Slowing down" << endl;
+            std::cout << "speed:" << car_speed << '\n';
+            ref_vel  = ref_vel - 5.0;
+          }
+          else if ((ref_vel < 49) and reduce_speed==false) {
+            cout << "speed up!" << endl;
+            ref_vel = ref_vel + 5.0;
+            // cout << "rel velocity" << ref_vel << endl;
+          }
+
+
+
 
           // 3 waypoints
           vector<double> next_wp0 =
@@ -435,7 +445,6 @@ int main() {
   }
   h.run();
 }
-
 
 /*
 #include <fstream>
